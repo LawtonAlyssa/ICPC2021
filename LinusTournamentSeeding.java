@@ -7,52 +7,70 @@ public class LinusTournamentSeeding {
     private static void solveProblem() {
         int numberOfRounds = kattio.getInt();
         int threshold = kattio.getInt();
-        long numberOfPlayers = (1 << numberOfRounds);
+        long numberOfPlayers = (1L << numberOfRounds);
         final List<Integer> players = new ArrayList<>();
         for (int i = 0; i < numberOfPlayers; i++) {
             players.add(kattio.getInt());
         }
         int answer = 0;
-        Collections.sort(players);
+        players.sort(Collections.reverseOrder());
         Iterator<Integer> iterator = players.iterator();
+        final List<Integer> fixed = new ArrayList<>();
         Integer first = iterator.next();
-        iterator.remove();
+        fixed.add(first);
         Integer second = iterator.next();
-        iterator.remove();
+        fixed.add(second);
         if (delta(first, second) <= threshold) {
             answer++;
         }
-        if (numberOfRounds == 1) {
-            kattio.println(answer);
-            return;
+        final List<Integer> competing = new ArrayList<>();
+        for (int i = 1; i < numberOfRounds; i++) {
+            int x = 1 << i;
+            for (int j = 0; j < x; j++) {
+                competing.add(iterator.next());
+            }
+            fixed.sort(Collections.reverseOrder());
+            competing.sort(Collections.reverseOrder());
+            //kattio.println(Arrays.toString(players.toArray()));
+            //kattio.println(Arrays.toString(fixed.toArray()));
+            //kattio.println(Arrays.toString(competing.toArray()));
+            int f = 0;
+            int c = 0;
+            while (f < x && c < x) {
+                //kattio.println(f);
+                //kattio.println(c);
+                int ff = fixed.get(f);
+                int cc = competing.get(c);
+                //kattio.println(ff);
+                //kattio.println(cc);
+                if (delta(ff, cc) <= threshold) {
+                    answer++;
+                    f++;
+                    c++;
+                } else if (ff > cc) {
+                    f++;
+                } else {
+                    c++;
+                }
+            }
+            fixed.addAll(competing);
+            competing.clear();
         }
-        Integer third = iterator.next();
-        iterator.remove();
-        Integer fourth = iterator.next();
-        iterator.remove();
-        boolean b1 = delta(first, third) <= threshold;
-        boolean b2 = delta(second, fourth) <= threshold;
-        boolean b3 = delta(first, fourth) <= threshold;
-        boolean b4 = delta(second, third) <= threshold;
-        if (b1 && b2) {
-            answer += 2;
-        } else if (b3 && b4) {
-            answer += 2;
-        } else if (b1 || b2 || b3 || b4) {
-            answer++;
-        }
-        if (numberOfRounds == 2) {
-            kattio.println(answer);
-            return;
-        }
+        kattio.println(answer);
+    }
 
-        while (iterator.hasNext()) {
+    static class Obj {
+        int index;
+        boolean[] thresholdHit;
 
+        public Obj(int index, boolean[] thresholdHit) {
+            this.index = index;
+            this.thresholdHit = thresholdHit;
         }
     }
 
     private static int delta(Integer a, Integer b) {
-        return Math.abs(a.intValue() - b.intValue());
+        return Math.abs(a - b);
     }
 
     public static void main(String[] args) {
