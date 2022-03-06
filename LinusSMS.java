@@ -1,5 +1,7 @@
 import java.io.*;
 import java.util.*;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 public class LinusSMS {
     static Kattio kattio;
@@ -11,30 +13,40 @@ public class LinusSMS {
         char[] target = kattio.getWord().toCharArray();
         for (char c : target) characters.add(c);
         int numberOfQueries = kattio.getInt();
-        int[] results = new int[numberOfQueries];
+        Set<char[]> found = new HashSet<>();
+        int max = target.length;
 
-        for (int i = 0; i < numberOfQueries; i++) {
-            char[] query = kattio.getWord().toCharArray();
-            if (isSMS(target, query)) {
-                results[i] = query.length;
-            }
-        }
-        for (int i = 2; i < min; i++) {
-            for (Character c : characters) {
-                char[] fillable = new char[i];
-                Arrays.fill(fillable, c);
-                if (isSMS(target, fillable)) {
-                    break;
+        for (int digits = 2; digits <= max; digits++) {
+            Set<char[]> testables = getTestables(0, digits);
+            for(char[] testable : testables) {
+                if(isSMS(target, testable)) {
+                    found.add(testable);
+                    max = digits;
                 }
             }
         }
-        for (int r : results) {
-            if (r == min) {
-                kattio.println(1);
-            } else {
-                kattio.println(0);
-            }
+
+        for (int i = 0; i < numberOfQueries; i++) {
+            char[] query = kattio.getWord().toCharArray();
+            kattio.println(found.stream().anyMatch(c -> Arrays.equals(c, query)) ? 1 : 0);
         }
+    }
+
+    private static Set<char[]> getTestables(int i, int digits) {
+        if (i == digits - 1) {
+            return characters.stream().map(c -> new char[]{c}).collect(Collectors.toSet());
+        }
+        Set<char[]> recursive = getTestables(i + 1, digits);
+        return characters
+                .stream()
+                .flatMap(c -> recursive
+                        .stream()
+                        .map(chars -> {
+                            char[] copy = Arrays.copyOf(chars, chars.length + 1);
+                            copy[chars.length] = c;
+                            return copy;
+                        }))
+                .collect(Collectors.toSet());
     }
 
     private static boolean isSMS(char[] target, char[] query) {
